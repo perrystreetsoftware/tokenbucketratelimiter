@@ -1,5 +1,5 @@
 //
-// TokenBucketRateLimiter.swift
+// DateTokenBucketRateLimiter.swift
 //
 // MIT License
 // Copyright (c) 2020 Perry Street Software, Inc
@@ -25,6 +25,48 @@
 
 import Foundation
 
+public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
+    private var lastTokenCalculatedDate: Date
+
+    public init(capacity: Int,
+         initialTokens: Int,
+         fillRate: Double,
+         name: String,
+         lastTokenCalculatedDate: Date = Date()) {
+        self.lastTokenCalculatedDate = lastTokenCalculatedDate
+
+        super.init(capacity: capacity, initialTokens: initialTokens, fillRate: fillRate, name: name)
+    }
+
+    internal override func resetCalculatedEvents() {
+        self.lastTokenCalculatedDate = Date()
+    }
+
+    internal override func calculateEventsSinceLastRequest() -> Double {
+        return Date().timeIntervalSince(self.lastTokenCalculatedDate)
+    }
+
+    public func overrideLastTokenCalculatedDate(with consumptionDate: Date) {
+        self.lastTokenCalculatedDate = consumptionDate
+    }
+}
+
+public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
+    private var totalEvents: Int = 0
+
+    internal override func resetCalculatedEvents() {
+        self.totalEvents = 0
+    }
+
+    internal override func calculateEventsSinceLastRequest() -> Double {
+        return Double(self.totalEvents)
+    }
+
+    func recordEvent() {
+        self.totalEvents += 1
+    }
+}
+
 public class TokenBucketRateLimiter {
     public static let maxBurstConsumptionRate: Int = defaultCapacity / 2
     private static let defaultCapacity: Int = 30
@@ -38,21 +80,27 @@ public class TokenBucketRateLimiter {
     private var capacity: Int = 0
     private var fillRate: Double = 0.0
     private var name: String
-    private var lastTokenCalculatedDate: Date
     private var tokensAccrued: Int = 0
 
+    internal func calculateEventsSinceLastRequest() -> Double {
+        fatalError("Must override in subclass")
+    }
+
+    internal func resetCalculatedEvents()  {
+        fatalError("Must override in subclass")
+    }
+
     private func recalculateTokens() -> Int {
-        let now = Date()
-        let secondsSinceLastRequest: TimeInterval = -1 * self.lastTokenCalculatedDate.timeIntervalSince(now)
+        let eventsSinceLastRequest = self.calculateEventsSinceLastRequest()
 
         if tokensAccrued < capacity {
-            let delta: Double = TimeInterval(fillRate) * secondsSinceLastRequest
+            let delta: Double = fillRate * eventsSinceLastRequest
             tokensAccrued = min(capacity, Int(floor(Double(tokensAccrued) + delta)))
 
-            // print("TokenBucketRateLimiter tokens calc \(name): Tokens \(tokensAccrued); Delta: \(delta); Capacity: \(capacity); seconds since last request: \(secondsSinceLastRequest)")
+            print("TokenBucketRateLimiter tokens calc \(name): Tokens \(tokensAccrued); Delta: \(delta); Capacity: \(capacity); seconds since last request: \(eventsSinceLastRequest)")
 
             if tokensAccrued > 0 {
-                self.lastTokenCalculatedDate = Date()
+                resetCalculatedEvents()
             }
         }
 
@@ -60,30 +108,24 @@ public class TokenBucketRateLimiter {
     }
 
     public init(capacity: Int,
-         initialTokens: Int,
-         fillRate: Double,
-         name: String,
-         lastTokenCalculatedDate: Date = Date()) {
+                initialTokens: Int,
+                fillRate: Double,
+                name: String) {
         self.name = name
-        self.lastTokenCalculatedDate = lastTokenCalculatedDate
         self.capacity = capacity
         self.tokensAccrued = initialTokens
         self.fillRate = fillRate
-    }
-
-    convenience public init(name: String) {
-        self.init(capacity: type(of: self).defaultCapacity,
-                  initialTokens: type(of: self).defaultCapacity,
-                  fillRate: type(of: self).defaultFillRate,
-                  name: name,
-                  lastTokenCalculatedDate: Date())
     }
 
     @discardableResult public func consume() -> Bool {
         return consume(defaultConsumptionRate)
     }
 
-    public func canConsume(_ tokens: Int = 1) -> Bool {
+    public func canConsume() -> Bool {
+        return canConsumeExactly(1)
+    }
+
+    public func canConsumeExactly(_ tokens: Int = 1) -> Bool {
         // Uses our accessor, which regenerates tokens
         guard tokens <= self.recalculateTokens() else {
             return false
@@ -92,13 +134,9 @@ public class TokenBucketRateLimiter {
         return true
     }
 
-    public func overrideLastTokenCalculatedDate(with consumptionDate: Date) {
-        self.lastTokenCalculatedDate = consumptionDate
-    }
-
     public func consume(_ tokens: Int) -> Bool {
         // Uses our accessor, which regenerates tokens
-        guard canConsume(tokens) else {
+        guard canConsumeExactly(tokens) else {
         // print("TokenBucketRateLimiter \(name): Tokens \(tokens) consumed; Total tokens: \(tokensAccrued)")
 
             return false

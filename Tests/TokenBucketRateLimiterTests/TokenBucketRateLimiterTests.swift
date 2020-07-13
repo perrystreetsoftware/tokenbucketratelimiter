@@ -1,89 +1,174 @@
 import XCTest
 @testable import TokenBucketRateLimiter
 
-final class TokenBucketRateLimiterTests: XCTestCase {
+final class EventTokenBucketRateLimiterTests: XCTestCase {
+    func buildEventTokenBucketRateLimiter(capacity: Int,
+                                          initialTokens: Int,
+                                          fillRate: Double,
+                                          name: String) -> EventTokenBucketRateLimiter {
+
+        return EventTokenBucketRateLimiter(capacity: capacity,
+                                   initialTokens: initialTokens,
+                                   fillRate: fillRate,
+                                   name: name)
+    }
+
     func testHighInitialTokens() {
-         let remoteRequestMeter = TokenBucketRateLimiter(capacity: 1, initialTokens: 3, fillRate: 2.0, name: "Test meter")
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         usleep(500000) // sleep for 500 milliseconds
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
+        let remoteRequestMeter =
+            buildEventTokenBucketRateLimiter(capacity: 1,
+                                             initialTokens: 3,
+                                             fillRate: 0.1,
+                                             name: "Test meter")
+
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+
+        for _ in 0..<9 {
+            remoteRequestMeter.recordEvent()
+        }
+        XCTAssertFalse(remoteRequestMeter.consume())
+
+        remoteRequestMeter.recordEvent()
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+    }
+
+    func testNoInitialTokens() {
+        let remoteRequestMeter =
+            buildEventTokenBucketRateLimiter(capacity: 1,
+                                             initialTokens: 0,
+                                             fillRate: 0.5,
+                                             name: "Test meter")
+        XCTAssertFalse(remoteRequestMeter.consume())
+        remoteRequestMeter.recordEvent()
+        XCTAssertFalse(remoteRequestMeter.consume())
+        remoteRequestMeter.recordEvent()
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+    }
+
+    func testAccrueMultipleTokens() {
+        let remoteRequestMeter =
+            buildEventTokenBucketRateLimiter(capacity: 2,
+                                             initialTokens: 0,
+                                             fillRate: 0.5,
+                                             name: "Test meter")
+        XCTAssertFalse(remoteRequestMeter.consume())
+        remoteRequestMeter.recordEvent()
+        remoteRequestMeter.recordEvent()
+        remoteRequestMeter.recordEvent()
+        remoteRequestMeter.recordEvent()
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+    }
+
+    static var allTests = [
+        ("test high initial tokens", testHighInitialTokens),
+        ("test high initial capacity", testNoInitialTokens),
+        ("test accrue multiple tokens", testAccrueMultipleTokens)
+    ]
+}
+
+final class DateTokenBucketRateLimiterTests: XCTestCase {
+    func buildDateTokenBucketRateLimiter(capacity: Int,
+                                         initialTokens: Int,
+                                         fillRate: Double,
+                                         name: String,
+                                         lastTokenCalculatedDate: Date = Date()) -> TokenBucketRateLimiter {
+
+        return DateTokenBucketRateLimiter(capacity: capacity,
+                                   initialTokens: initialTokens,
+                                   fillRate: fillRate,
+                                   name: name,
+                                   lastTokenCalculatedDate: lastTokenCalculatedDate)
+    }
+
+    func testHighInitialTokens() {
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 3, fillRate: 2.0, name: "Test meter")
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(500005) // sleep for 500 milliseconds
+
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
      }
 
      func testHighInitialCapacity() {
-         let remoteRequestMeter = TokenBucketRateLimiter(capacity: 3, initialTokens: 1, fillRate: 3.0, name: "Test meter")
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         usleep(333334) // sleep for 333 milliseconds
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         sleep(1)
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 3, initialTokens: 1, fillRate: 3.0, name: "Test meter")
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(333334) // sleep for 333 milliseconds
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        sleep(1)
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
      }
 
      func testFasterFillRate() {
-         let remoteRequestMeter = TokenBucketRateLimiter(capacity: 4, initialTokens: 1, fillRate: 2.0, name: "Test meter")
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         sleep(1)
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 4, initialTokens: 1, fillRate: 2.0, name: "Test meter")
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        sleep(1)
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
      }
 
      func testFasterFillRate2() {
-         let remoteRequestMeter = TokenBucketRateLimiter(capacity: 4, initialTokens: 1, fillRate: 4.0, name: "Test meter")
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         usleep(250000) // sleep for 250 milliseconds
-         // Our 4 tokens/sec fill rate means it only took 250 ms to get a token
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 4, initialTokens: 1, fillRate: 4.0, name: "Test meter")
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(250000) // sleep for 250 milliseconds
+        // Our 4 tokens/sec fill rate means it only took 250 ms to get a token
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
      }
 
      func testLastTokenCalculatedDate() {
-         let oneSecondAgo = Date() - 1.0
+        let oneSecondAgo = Date() - 1.0
 
-         let remoteRequestMeter = TokenBucketRateLimiter(capacity: 1,
-                                                        initialTokens: 0,
-                                                        fillRate: 1.0,
-                                                        name: "Test meter",
-                                                        lastTokenCalculatedDate: oneSecondAgo)
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.consume())
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1,
+                                                                 initialTokens: 0,
+                                                                 fillRate: 1.0,
+                                                                 name: "Test meter",
+                                                                 lastTokenCalculatedDate: oneSecondAgo)
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.consume())
 
-         usleep(250000) // sleep for 250 milliseconds
-         XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(250000) // sleep for 250 milliseconds
+        XCTAssertFalse(remoteRequestMeter.consume())
 
-         usleep(250000) // sleep for 250 milliseconds
-         XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(250000) // sleep for 250 milliseconds
+        XCTAssertFalse(remoteRequestMeter.consume())
 
-         usleep(250000) // sleep for 250 milliseconds
-         XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(250000) // sleep for 250 milliseconds
+        XCTAssertFalse(remoteRequestMeter.consume())
 
-         usleep(250000) // sleep for 250 milliseconds
-         XCTAssertTrue(remoteRequestMeter.consume())
+        usleep(250000) // sleep for 250 milliseconds
+        XCTAssertTrue(remoteRequestMeter.consume())
      }
 
      func testCanConsume() {
-         let remoteRequestMeter = TokenBucketRateLimiter(capacity: 1, initialTokens: 0, fillRate: 4.0, name: "Test meter")
-         XCTAssertFalse(remoteRequestMeter.canConsume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.canConsume())
-         XCTAssertFalse(remoteRequestMeter.consume())
-         usleep(250000) // sleep for 250 milliseconds
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 0, fillRate: 4.0, name: "Test meter")
+        XCTAssertFalse(remoteRequestMeter.canConsume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.canConsume())
+        XCTAssertFalse(remoteRequestMeter.consume())
+        usleep(250000) // sleep for 250 milliseconds
 
-         // Our 4 tokens/sec fill rate means it only took 250 ms to get a token
-         XCTAssertTrue(remoteRequestMeter.canConsume())
-         XCTAssertTrue(remoteRequestMeter.consume())
-         XCTAssertFalse(remoteRequestMeter.canConsume())
-         XCTAssertFalse(remoteRequestMeter.consume())
+        // Our 4 tokens/sec fill rate means it only took 250 ms to get a token
+        XCTAssertTrue(remoteRequestMeter.canConsume())
+        XCTAssertTrue(remoteRequestMeter.consume())
+        XCTAssertFalse(remoteRequestMeter.canConsume())
+        XCTAssertFalse(remoteRequestMeter.consume())
      }
 
     static var allTests = [
