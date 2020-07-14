@@ -38,7 +38,7 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
         super.init(capacity: capacity, initialTokens: initialTokens, fillRate: fillRate, name: name)
     }
 
-    internal override func resetCalculatedEvents() {
+    public override func resetCalculatedEvents() {
         self.lastTokenCalculatedDate = Date()
     }
 
@@ -54,7 +54,7 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
 public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
     private var totalEvents: Int = 0
 
-    internal override func resetCalculatedEvents() {
+    public override func resetCalculatedEvents() {
         self.totalEvents = 0
     }
 
@@ -86,7 +86,7 @@ public class TokenBucketRateLimiter {
         fatalError("Must override in subclass")
     }
 
-    internal func resetCalculatedEvents()  {
+    public func resetCalculatedEvents()  {
         fatalError("Must override in subclass")
     }
 
