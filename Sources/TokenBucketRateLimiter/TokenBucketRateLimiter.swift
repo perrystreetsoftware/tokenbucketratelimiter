@@ -49,6 +49,10 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
     public func overrideLastTokenCalculatedDate(with consumptionDate: Date) {
         self.lastTokenCalculatedDate = consumptionDate
     }
+
+    public override func recordEvent() {
+        // no-op; this happens by default as time elapses
+    }
 }
 
 public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
@@ -62,7 +66,7 @@ public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
         return Double(self.totalEvents)
     }
 
-    func recordEvent() {
+    public override func recordEvent() {
         self.totalEvents += 1
     }
 }
@@ -87,6 +91,10 @@ public class TokenBucketRateLimiter {
     }
 
     public func resetCalculatedEvents()  {
+        fatalError("Must override in subclass")
+    }
+
+    public func recordEvent()  {
         fatalError("Must override in subclass")
     }
 
