@@ -69,8 +69,8 @@ public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
 
 public class TokenBucketRateLimiter {
     public static let maxBurstConsumptionRate: Int = defaultCapacity / 2
-    private static let defaultCapacity: Int = 30
-    private static let defaultFillRate: Double = 2.0
+    public static let defaultCapacity: Int = 30
+    public static let defaultFillRate: Double = 2.0
 
     public var defaultConsumptionRate = 1
 
