@@ -81,7 +81,7 @@ final class DateTokenBucketRateLimiterTests: XCTestCase {
                                          initialTokens: Int,
                                          fillRate: Double,
                                          name: String,
-                                         lastTokenCalculatedDate: Date = Date()) -> TokenBucketRateLimiter {
+                                         lastTokenCalculatedDate: Date = Date()) -> DateTokenBucketRateLimiter {
 
         return DateTokenBucketRateLimiter(capacity: capacity,
                                    initialTokens: initialTokens,
@@ -174,6 +174,13 @@ final class DateTokenBucketRateLimiterTests: XCTestCase {
         XCTAssertFalse(remoteRequestMeter.canConsume())
         XCTAssertFalse(remoteRequestMeter.consume())
      }
+
+    func testOverrideLastCalculatedDate() {
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 0, fillRate: 4.0, name: "Test meter")
+        XCTAssertFalse(remoteRequestMeter.canConsume())
+        remoteRequestMeter.lastTokenCalculatedDate = Date() - 5.0
+        XCTAssertTrue(remoteRequestMeter.canConsume())
+    }
 
     static var allTests = [
         ("test high initial tokens", testHighInitialTokens),

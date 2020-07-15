@@ -26,16 +26,17 @@
 import Foundation
 
 public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
-    private(set) public var lastTokenCalculatedDate: Date
+    public var lastTokenCalculatedDate: Date
 
     public init(capacity: Int,
          initialTokens: Int,
          fillRate: Double,
          name: String,
-         lastTokenCalculatedDate: Date = Date()) {
+         lastTokenCalculatedDate: Date = Date(),
+         debugMode: Bool = false) {
         self.lastTokenCalculatedDate = lastTokenCalculatedDate
 
-        super.init(capacity: capacity, initialTokens: initialTokens, fillRate: fillRate, name: name)
+        super.init(capacity: capacity, initialTokens: initialTokens, fillRate: fillRate, name: name, debugMode: debugMode)
     }
 
     public override func resetCalculatedEvents() {
@@ -44,10 +45,6 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
 
     internal override func calculateEventsSinceLastRequest() -> Double {
         return Date().timeIntervalSince(self.lastTokenCalculatedDate)
-    }
-
-    public func overrideLastTokenCalculatedDate(with consumptionDate: Date) {
-        self.lastTokenCalculatedDate = consumptionDate
     }
 
     public override func recordEvent() {
@@ -90,6 +87,8 @@ public class TokenBucketRateLimiter {
     public var capacity: Int = 0
     public var fillRate: Double = 0.0
 
+    public var debugMode = false
+
     internal func calculateEventsSinceLastRequest() -> Double {
         fatalError("Must override in subclass")
     }
@@ -109,7 +108,7 @@ public class TokenBucketRateLimiter {
             let delta: Double = fillRate * eventsSinceLastRequest
             tokensAccrued = min(capacity, Int(floor(Double(tokensAccrued) + delta)))
 
-            print("TokenBucketRateLimiter tokens calc \(name): Tokens \(tokensAccrued); Delta: \(delta); Capacity: \(capacity); seconds since last request: \(eventsSinceLastRequest)")
+            // print("TokenBucketRateLimiter tokens calc \(name): Tokens \(tokensAccrued); Delta: \(delta); Capacity: \(capacity); seconds since last request: \(eventsSinceLastRequest)")
 
             if tokensAccrued > 0 {
                 resetCalculatedEvents()
@@ -122,11 +121,13 @@ public class TokenBucketRateLimiter {
     public init(capacity: Int,
                 initialTokens: Int,
                 fillRate: Double,
-                name: String) {
+                name: String,
+                debugMode: Bool = false) {
         self.name = name
         self.capacity = capacity
         self.tokensAccrued = initialTokens
         self.fillRate = fillRate
+        self.debugMode = debugMode
     }
 
     @discardableResult public func consume() -> Bool {
@@ -149,14 +150,18 @@ public class TokenBucketRateLimiter {
     public func consume(_ tokens: Int) -> Bool {
         // Uses our accessor, which regenerates tokens
         guard canConsumeExactly(tokens) else {
-        // print("TokenBucketRateLimiter \(name): Tokens \(tokens) consumed; Total tokens: \(tokensAccrued)")
+            if debugMode {
+                debugPrint("TokenBucketRateLimiter \(name): Tokens \(tokens) consumed; Total tokens: \(tokensAccrued)")
+            }
 
             return false
         }
 
         tokensAccrued -= tokens
 
-        // print("TokenBucketRateLimiter \(name): Tokens \(tokens) consumed; Total tokens: \(tokensAccrued)")
+        if debugMode {
+            debugPrint("TokenBucketRateLimiter \(name): Tokens \(tokens) consumed; Total tokens: \(tokensAccrued)")
+        }
 
         return true
     }
