@@ -81,10 +81,12 @@ public class TokenBucketRateLimiter {
     private var totalCurrentRequests: Int = 0
     private var maxConcurrentRequests: Int = 0
     private var maxTimeToWaitForResponse: Int = 0
-    private var capacity: Int = 0
-    private var fillRate: Double = 0.0
     private var name: String
     private var tokensAccrued: Int = 0
+
+    // Enable these parameters to be dynamic
+    var capacity: Int = 0
+    var fillRate: Double = 0.0
 
     internal func calculateEventsSinceLastRequest() -> Double {
         fatalError("Must override in subclass")
