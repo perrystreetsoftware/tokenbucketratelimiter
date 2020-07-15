@@ -47,6 +47,8 @@ final class EventTokenBucketRateLimiterTests: XCTestCase {
         remoteRequestMeter.recordEvent()
         XCTAssertTrue(remoteRequestMeter.consume())
         XCTAssertFalse(remoteRequestMeter.consume())
+
+        XCTAssertEqual(remoteRequestMeter.totalEventCount, 2)
     }
 
     func testAccrueMultipleTokens() {
@@ -63,6 +65,8 @@ final class EventTokenBucketRateLimiterTests: XCTestCase {
         XCTAssertTrue(remoteRequestMeter.consume())
         XCTAssertTrue(remoteRequestMeter.consume())
         XCTAssertFalse(remoteRequestMeter.consume())
+
+        XCTAssertEqual(remoteRequestMeter.totalEventCount, 4)
     }
 
     static var allTests = [

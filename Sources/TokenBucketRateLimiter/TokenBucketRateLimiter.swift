@@ -56,18 +56,20 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
 }
 
 public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
-    private var totalEvents: Int = 0
+    private var currentEventCount: Int = 0
+    private (set) var totalEventCount: Int = 0
 
     public override func resetCalculatedEvents() {
-        self.totalEvents = 0
+        self.currentEventCount = 0
     }
 
     internal override func calculateEventsSinceLastRequest() -> Double {
-        return Double(self.totalEvents)
+        return Double(self.currentEventCount)
     }
 
     public override func recordEvent() {
-        self.totalEvents += 1
+        self.currentEventCount += 1
+        self.totalEventCount += 1
     }
 }
 
