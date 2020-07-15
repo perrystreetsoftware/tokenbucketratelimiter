@@ -26,7 +26,7 @@
 import Foundation
 
 public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
-    private var lastTokenCalculatedDate: Date
+    private(set) public var lastTokenCalculatedDate: Date
 
     public init(capacity: Int,
          initialTokens: Int,
