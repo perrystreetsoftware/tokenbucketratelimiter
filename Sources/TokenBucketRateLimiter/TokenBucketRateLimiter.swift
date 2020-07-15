@@ -57,7 +57,7 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
 
 public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
     private var currentEventCount: Int = 0
-    private (set) var totalEventCount: Int = 0
+    private (set) public var totalEventCount: Int = 0
 
     public override func resetCalculatedEvents() {
         self.currentEventCount = 0
@@ -87,8 +87,8 @@ public class TokenBucketRateLimiter {
     private var tokensAccrued: Int = 0
 
     // Enable these parameters to be dynamic
-    var capacity: Int = 0
-    var fillRate: Double = 0.0
+    public var capacity: Int = 0
+    public var fillRate: Double = 0.0
 
     internal func calculateEventsSinceLastRequest() -> Double {
         fatalError("Must override in subclass")
