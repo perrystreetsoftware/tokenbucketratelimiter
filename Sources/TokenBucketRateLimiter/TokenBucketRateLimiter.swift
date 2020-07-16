@@ -68,6 +68,12 @@ public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
         self.currentEventCount += 1
         self.totalEventCount += 1
     }
+
+    public func recordEvents(count: Int) {
+        for _ in 0..<count {
+            self.recordEvent()
+        }
+    }
 }
 
 public class TokenBucketRateLimiter {

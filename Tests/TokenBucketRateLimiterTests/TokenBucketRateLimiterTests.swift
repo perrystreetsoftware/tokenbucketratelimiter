@@ -69,10 +69,23 @@ final class EventTokenBucketRateLimiterTests: XCTestCase {
         XCTAssertEqual(remoteRequestMeter.totalEventCount, 4)
     }
 
+    func testRecordMultipleEvents() {
+        let remoteRequestMeter =
+            buildEventTokenBucketRateLimiter(capacity: 2,
+                                             initialTokens: 0,
+                                             fillRate: 0.5,
+                                             name: "Test meter")
+
+        XCTAssertFalse(remoteRequestMeter.consume())
+        remoteRequestMeter.recordEvents(count: 2)
+        XCTAssertTrue(remoteRequestMeter.consume())
+    }
+
     static var allTests = [
         ("test high initial tokens", testHighInitialTokens),
-        ("test high initial capacity", testNoInitialTokens),
-        ("test accrue multiple tokens", testAccrueMultipleTokens)
+        ("test no initial capacity", testNoInitialTokens),
+        ("test accrue multiple tokens", testAccrueMultipleTokens),
+        ("test record multiple events", testRecordMultipleEvents)
     ]
 }
 
