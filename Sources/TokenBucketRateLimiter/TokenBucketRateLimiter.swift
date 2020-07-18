@@ -25,7 +25,7 @@
 
 import Foundation
 
-public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
+public class DateTokenBucketRateLimiter: TokenBucketRateLimiter, CustomStringConvertible {
     public var lastTokenCalculatedDate: Date
 
     public init(capacity: Int,
@@ -50,9 +50,11 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter {
     public override func recordEvent() {
         // no-op; this happens by default as time elapses
     }
+
+    public var description: String { return "TokenBucketRateLimiter \(name): Total tokens: \(tokensAccrued); last calculated date is \(lastTokenCalculatedDate)" }
 }
 
-public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
+public class EventTokenBucketRateLimiter: TokenBucketRateLimiter, CustomStringConvertible {
     private var currentEventCount: Int = 0
     private (set) public var totalEventCount: Int = 0
 
@@ -74,6 +76,8 @@ public class EventTokenBucketRateLimiter: TokenBucketRateLimiter {
             self.recordEvent()
         }
     }
+
+    public var description: String { return "TokenBucketRateLimiter \(name): Total tokens: \(tokensAccrued); currentEventCount is \(currentEventCount)" }
 }
 
 public class TokenBucketRateLimiter {
@@ -86,8 +90,8 @@ public class TokenBucketRateLimiter {
     private var totalCurrentRequests: Int = 0
     private var maxConcurrentRequests: Int = 0
     private var maxTimeToWaitForResponse: Int = 0
-    private var name: String
-    private var tokensAccrued: Int = 0
+    internal var tokensAccrued: Int = 0
+    internal var name: String
 
     // Enable these parameters to be dynamic
     public var capacity: Int = 0

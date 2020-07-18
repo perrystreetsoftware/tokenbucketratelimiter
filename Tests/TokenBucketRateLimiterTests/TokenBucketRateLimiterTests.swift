@@ -179,6 +179,9 @@ final class DateTokenBucketRateLimiterTests: XCTestCase {
         XCTAssertFalse(remoteRequestMeter.consume())
         XCTAssertFalse(remoteRequestMeter.canConsume())
         XCTAssertFalse(remoteRequestMeter.consume())
+
+        // SOME KIND OF BUG CAUSES THE FIRST USLEEP TO BE IGNORED
+        usleep(1000) // sleep for 100 microseconds
         usleep(250000) // sleep for 250 milliseconds
 
         // Our 4 tokens/sec fill rate means it only took 250 ms to get a token
