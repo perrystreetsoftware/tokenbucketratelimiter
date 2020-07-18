@@ -168,6 +168,7 @@ public class TokenBucketRateLimiter {
         }
 
         tokensAccrued -= tokens
+        resetCalculatedEvents()
 
         if debugMode {
             debugPrint("TokenBucketRateLimiter \(name): Tokens \(tokens) consumed; Total tokens: \(tokensAccrued)")
