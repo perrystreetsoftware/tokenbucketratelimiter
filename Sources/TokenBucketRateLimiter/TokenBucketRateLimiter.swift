@@ -51,6 +51,24 @@ public class DateTokenBucketRateLimiter: TokenBucketRateLimiter, CustomStringCon
         // no-op; this happens by default as time elapses
     }
 
+    public var timeUntilNextToken: String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .full
+
+        return formatter.string(from: TimeInterval(secondsUntilNextToken))!
+    }
+
+    public var secondsUntilNextToken: Double {
+        let delta: Double = fillRate * self.calculateEventsSinceLastRequest()
+
+        return (ceil(delta) - delta) / fillRate
+    }
+
+    private func secondsToHoursMinutesSeconds (seconds : Int) -> (Int, Int, Int) {
+      return (seconds / 3600, (seconds % 3600) / 60, (seconds % 3600) % 60)
+    }
+
     public var description: String { return "TokenBucketRateLimiter \(name): Total tokens: \(tokensAccrued); last calculated date is \(lastTokenCalculatedDate)" }
 }
 

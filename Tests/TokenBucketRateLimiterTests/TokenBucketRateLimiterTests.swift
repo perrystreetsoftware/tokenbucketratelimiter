@@ -103,6 +103,18 @@ final class DateTokenBucketRateLimiterTests: XCTestCase {
                                    lastTokenCalculatedDate: lastTokenCalculatedDate)
     }
 
+    func testTimeUntilNextToken() {
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 0, fillRate: 1.0/30.0, name: "Test meter", lastTokenCalculatedDate: Date())
+
+        let timeUntilNextTokenString = remoteRequestMeter.timeUntilNextToken
+        switch timeUntilNextTokenString {
+        case "30 seconds", "29 seconds":
+            break
+        default:
+            XCTFail("Invalid time until next token")
+        }
+    }
+
     func testTokenCreatedLongAgoConsumeDoesNotImmediatelyFill() {
         // This is a limiter that was created 10 seconds ago
         let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 1, fillRate: 0.1, name: "Test meter", lastTokenCalculatedDate: Date() - 10.0)
