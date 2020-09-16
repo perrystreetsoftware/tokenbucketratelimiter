@@ -16,4 +16,7 @@ jobs:
     - name: Build
       run: swift build -v
     - name: Run tests
-      run: swift test -v
+      run: swift test --enable-code-coverage -v;
+           xcrun llvm-cov export -format="lcov" .build/x86_64-apple-macosx/debug/TokenBucketRateLimiterPackageTests.xctest/Contents/MacOS/TokenBucketRateLimiterPackageTests -instr-profile .build/debug/codecov/default.profdata > info.lcov;
+           bash <(curl https://codecov.io/bash)
+
