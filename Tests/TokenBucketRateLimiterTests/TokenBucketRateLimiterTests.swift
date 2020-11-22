@@ -103,6 +103,14 @@ final class DateTokenBucketRateLimiterTests: XCTestCase {
                                    lastTokenCalculatedDate: lastTokenCalculatedDate)
     }
 
+    func testTimeUntilNextTokenStartOfEpoch() {
+        // If our last token calculated date is "never", then the seconds until
+        // our next token is going to be a random number that is always less than the fill rate
+        let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 0, fillRate: 1.0/30.0, name: "Test meter", lastTokenCalculatedDate: Date(timeIntervalSince1970: 0))
+
+        XCTAssertLessThan(remoteRequestMeter.secondsUntilNextToken, 30.0)
+    }
+
     func testTimeUntilNextToken() {
         let remoteRequestMeter = buildDateTokenBucketRateLimiter(capacity: 1, initialTokens: 0, fillRate: 1.0/30.0, name: "Test meter", lastTokenCalculatedDate: Date())
 
