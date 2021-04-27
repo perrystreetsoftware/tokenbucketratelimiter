@@ -25,5 +25,5 @@ jobs:
            xcrun llvm-cov export -format="lcov" .build/x86_64-apple-macosx/debug/TokenBucketRateLimiterPackageTests.xctest/Contents/MacOS/TokenBucketRateLimiterPackageTests -instr-profile .build/debug/codecov/default.profdata > info.lcov;
            bash <(curl https://codecov.io/bash)
     - name: Codeclimate after
-      run: ./cc-test-reporter after-build
+      run: ./cc-test-reporter after-build -t lcov -r 6caa444ece262c9669cc2e7042f6fba2a74b286aa43648fbf0630763288e0d2f
 
